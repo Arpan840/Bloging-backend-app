@@ -8,6 +8,7 @@ const port = parseInt(process.env.Port);
 const expressSession = require("express-session");
 const BlogRouter = require("./Controller/BlogController");
 const isAuth = require("./MiddelWare/isAuth.middleware");
+const ratelimiting = require("./MiddelWare/rateLimiting.middleware");
 const MongoDBStore = require('connect-mongodb-session')(expressSession)
 const store = new MongoDBStore({
   uri: process.env.Database,
@@ -21,7 +22,7 @@ app.use(expressSession({
 }))
 
 app.use('/auth',AuthRouter);
-app.use('/blog',isAuth,BlogRouter);
+app.use('/blog',isAuth,ratelimiting,BlogRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on Localhost:${port}`);

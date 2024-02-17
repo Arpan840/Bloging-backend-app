@@ -8,7 +8,6 @@ const {
   editBlog,
   deleteBlog,
 } = require("../Model/Blog.Model");
-const BlogSchema = require("../Schemas/Blog.Schema");
 const BlogRouter = express.Router();
 
 BlogRouter.post("/addBlog", async (req, res) => {
