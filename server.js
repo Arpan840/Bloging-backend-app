@@ -10,6 +10,7 @@ const BlogRouter = require("./Controller/BlogController");
 const isAuth = require("./MiddelWare/isAuth.middleware");
 const ratelimiting = require("./MiddelWare/rateLimiting.middleware");
 const FolloeRouter = require("./Controller/FollowController");
+const scheduler = require("./Model/cron");
 const MongoDBStore = require("connect-mongodb-session")(expressSession);
 const store = new MongoDBStore({
   uri: process.env.Database,
@@ -30,4 +31,5 @@ app.use("/follow", isAuth, FolloeRouter);
 
 app.listen(port, () => {
   console.log(`Server is running on Localhost:${port}`);
+  // scheduler()
 });
