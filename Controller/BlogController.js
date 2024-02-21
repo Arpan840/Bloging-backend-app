@@ -8,6 +8,7 @@ const {
   editBlog,
   deleteBlog,
 } = require("../Model/Blog.Model");
+const { followingList } = require("../Model/Follow.Model");
 const BlogRouter = express.Router();
 
 BlogRouter.post("/addBlog", async (req, res) => {
@@ -33,8 +34,15 @@ BlogRouter.get("/allBlogs", async (req, res) => {
   try {
     const skip = parseInt(req.query.skip) || 0;
     const limit = parseInt(req.query.limit) || 10;
-    const blogData = await Blogs(skip, limit);
-    const data = blogData[0].data;
+    const followingUser = req.session.user._id
+    const followingListData = await followingList(followingUser,skip,limit)
+    let personIamFollowing = [];
+    followingListData.map((data)=>{
+      console.log(data.following._id)
+      personIamFollowing.push(data.following._id)
+    })
+    const blogData = await Blogs(personIamFollowing,skip, limit);
+    const data = blogData;
     res.send({
       status: 200,
       data: data,
@@ -89,7 +97,6 @@ BlogRouter.put("/editBlog", async (req, res) => {
   try {
     const { id, title, description } = req.body;
     const userId = req.session.user._id;
-    console.log(userId, "userId");
     let data = await editBlog(id, userId, title, description);
     res.send({
       status: 200,
@@ -107,7 +114,6 @@ BlogRouter.put("/editBlog", async (req, res) => {
 BlogRouter.delete("/blogDelete", async (req, res) => {
   const blogId = req.body.blogId;
   const userId = req.session.user._id;
-  console.log(blogId, userId, "test");
   try {
     const data = await deleteBlog(blogId, userId);
     res.send({

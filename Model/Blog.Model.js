@@ -9,24 +9,44 @@ async function addBlog(title, description, ID) {
   return await BlogSchema.create(blogData);
 }
 
-async function Blogs(skip, limit) {
+async function Blogs(personIamFollowing, skip, limit) {
   // Get all the blogs from the database and sort them by date in descending order
   const data = await BlogSchema.aggregate([
-    { $sort: { createdAt: -1 } },
     {
       $facet: {
-        data: [{ $skip: skip }, { $limit: limit }],
+        matchedBlogs: [
+          { $match: {$and: [
+            { userId: { $in: personIamFollowing } },
+            { isDeleted: { $ne: true } }
+          ]}},
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+        ],
+        unmatchedBlogs: [
+          { $match: {$and: [
+            { userId: { $nin: personIamFollowing } },
+            { isDeleted: { $ne: true } }
+          ]} },
+          { $sort: { createdAt: -1 } },
+          { $limit: limit },
+        ],
+      },
+    },
+    {
+      $project: {
+        blogs: { $concatArrays: ["$matchedBlogs", "$unmatchedBlogs"] },
       },
     },
   ]);
-  return data;
+  return data[0].blogs;
 }
 
 async function myBlogs(userId, skip, limit) {
   const blogs = await BlogSchema.aggregate([
     { $sort: { createdAt: -1 } },
     {
-      $match: { userId: userId },
+      $match: { userId: userId, isDeleted: {$ne:!true} },
     },
     {
       $facet: {
@@ -73,7 +93,8 @@ async function editBlog(id, userId, title, description) {
 
 async function deleteBlog(id, userId) {
   try {
-    const data = await BlogSchema.findOneAndDelete({ _id: id, userId: userId });
+    //const data = await BlogSchema.findOneAndDelete({ _id: id, userId: userId });
+    const data = await BlogSchema.findOneAndUpdate({_id: id, userId: userId},{isDeleted: true},{new:true})
     if (data) {
       return data;
     } else {
